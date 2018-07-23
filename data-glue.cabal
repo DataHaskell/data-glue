@@ -27,6 +27,7 @@ library
   ghc-options: -Wall
   build-depends:
       base
+    , hvega
     , Frames
     , ihaskell
     , ipython-kernel
