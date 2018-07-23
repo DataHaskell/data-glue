@@ -4,9 +4,14 @@ FROM fpco/stack-build:lts-11.17
 RUN apt-get update && apt-get install -y python3-pip libgmp-dev libmagic-dev libtinfo-dev libzmq3-dev libcairo2-dev libpango1.0-dev libblas-dev liblapack-dev gcc g++ && \
     rm -rf /var/lib/apt/lists/*
 
+RUN curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash - && \
+    apt-get install -y nodejs
+
 # Install Jupyter notebook
 RUN pip3 install -U jupyterlab
+RUN jupyter labextension install ihaskell_jupyterlab
 
+# setup the haskell environment
 ENV LANG en_US.UTF-8
 ENV NB_USER jovyan
 ENV NB_UID 1000
