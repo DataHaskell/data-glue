@@ -42,4 +42,4 @@ RUN chown -R ${NB_UID} ${HOME}
 USER ${NB_UID}
 
 # Run the notebook
-CMD ["stack", "exec", "--", "jupyter", "notebook", "--ip", "0.0.0.0"]
+CMD ["stack", "exec", "--", "jupyter", "lab", "--ip", "0.0.0.0"]
