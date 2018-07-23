@@ -30,8 +30,7 @@ RUN chown -R ${NB_UID} ${HOME}
 USER ${NB_UID}
 
 # Set up stack
-COPY stack.yaml stack.yaml
-COPY data-glue.cabal data-glue.cabal
+COPY . .
 
 # Install dependencies for IHaskell
 USER root
