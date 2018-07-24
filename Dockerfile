@@ -1,8 +1,10 @@
 FROM fpco/stack-build:lts-11.17
 
 # Install all necessary Ubuntu packages
-RUN apt-get update && apt-get install -y python3-pip libgmp-dev libmagic-dev libtinfo-dev libzmq3-dev libcairo2-dev libpango1.0-dev libblas-dev liblapack-dev gcc g++ r-base-core && \
+RUN apt-get update && apt-get install -y python3-pip libgmp-dev libmagic-dev libtinfo-dev libzmq3-dev libcairo2-dev libpango1.0-dev libblas-dev liblapack-dev gcc g++ r-base r-base-core && \
     rm -rf /var/lib/apt/lists/*
+
+RUN R -e "install.packages(c('ggplot2'), repos='http://cran.rstudio.com/')"
 
 RUN curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash - && \
     apt-get install -y nodejs
