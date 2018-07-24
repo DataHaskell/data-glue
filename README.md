@@ -3,6 +3,8 @@
 
 # Haskell Data-Glue #
 
+This contains some interactive tutorials that show how Haskell can be used for
+typical data science workflows.
 
 ## Datasets ##
 
