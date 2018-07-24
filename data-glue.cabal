@@ -41,6 +41,9 @@ library
     , ihaskell-magic
     , ihaskell-plot
     , ihaskell-widgets
+    , inline-r
+    , ihaskell-inline-r
+    , ghc-parser
   other-modules:
       Paths_data_glue
   default-language: Haskell2010
