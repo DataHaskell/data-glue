@@ -1,7 +1,7 @@
 resolver: lts-11.17
 apply-ghc-options: everything
-ghc-options:
-  "$locals": -opta-Wa,-mrelax-relocations=no
+ghc-options: 
+    '$everything': -Wall -opta-Wa,-mrelax-relocations=no
 allow-newer: true
 extra-deps:
 - fast-math-1.0.2

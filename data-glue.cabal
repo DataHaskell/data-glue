@@ -24,7 +24,7 @@ source-repository head
   location: https://github.com/githubuser/data-glue
 
 library
-  ghc-options: -Wall
+  ghc-options: -Wall -freduction-depth=32
   build-depends:
       base
     , hvega
