@@ -1,5 +1,5 @@
 
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/DataHaskell/data-glue/master?urlpath=lab/tree/tutorials/jlab_hvega.ipynb)
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/DataHaskell/data-glue/9a5b348?urlpath=lab/tree/tutorials/jlab_hvega.ipynb)
 
 # Haskell Data-Glue #
 
