@@ -32,7 +32,8 @@ RUN chown -R ${NB_UID} ${HOME}
 USER ${NB_UID}
 
 # Set up stack
-COPY . .
+COPY data-glue.cabal data-glue.cabal
+COPY stack.yaml stack.yaml
 
 # Install dependencies for IHaskell
 USER root
@@ -42,6 +43,9 @@ USER ${NB_UID}
 RUN stack setup
 RUN stack build && stack install
 RUN stack exec -- ihaskell install --stack
+
+COPY datasets datasets
+COPY tutorials tutorials
 
 USER root
 RUN chown -R ${NB_UID} ${HOME}

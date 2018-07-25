@@ -4,6 +4,7 @@ ghc-options:
   "$locals": -opta-Wa,-mrelax-relocations=no
 allow-newer: true
 extra-deps:
+- fast-math-1.0.2
 - inline-r-0.9.2
 - ihaskell-inline-r-0.1.1.0
 - Frames-0.4.0
@@ -33,4 +34,3 @@ extra-deps:
 - dual-tree-0.2.1
 - cubicbezier-0.6.0.5
 - mfsolve-0.3.2.0
-- fast-math-1.0.2
