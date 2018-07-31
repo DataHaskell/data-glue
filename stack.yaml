@@ -34,3 +34,4 @@ extra-deps:
 - dual-tree-0.2.1
 - cubicbezier-0.6.0.5
 - mfsolve-0.3.2.0
+- foldl-1.4.2

@@ -27,6 +27,7 @@ library
   ghc-options: -Wall -freduction-depth=32
   build-depends:
       base
+    , foldl
     , hvega
     , Frames
     , ihaskell
