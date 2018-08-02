@@ -1,4 +1,4 @@
-resolver: lts-11.17
+resolver: lts-11.19
 apply-ghc-options: everything
 ghc-options: 
     '$everything': -Wall -opta-Wa,-mrelax-relocations=no
