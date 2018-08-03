@@ -27,23 +27,24 @@ library
   ghc-options: -Wall -freduction-depth=32
   build-depends:
       base
-    , hvega
+    , foldl
     , Frames
+    , ghc-parser
+    , hvega
     , ihaskell
-    , ipython-kernel
     , ihaskell-aeson
     , ihaskell-blaze
     , ihaskell-charts
     , ihaskell-diagrams
     , ihaskell-gnuplot
     , ihaskell-hatex
+    , ihaskell-inline-r
     , ihaskell-juicypixels
     , ihaskell-magic
     , ihaskell-plot
     , ihaskell-widgets
+    , ipython-kernel
     , inline-r
-    , ihaskell-inline-r
-    , ghc-parser
   other-modules:
       Paths_data_glue
   default-language: Haskell2010
