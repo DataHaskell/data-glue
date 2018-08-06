@@ -1,12 +1,15 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module DataGlue.Base
   ( dropFrameRow
-  , prettyFrame
   , takeFrameRow
   ) where
 
@@ -23,11 +26,16 @@ takeFrameRow n (Frame fLen fRow) = Frame (min n fLen) fRow
 dropFrameRow :: Int -> Frame r -> Frame r
 dropFrameRow n (Frame fLen fRow) = Frame (max 0 (fLen - n)) (\i -> fRow (i + n))
 
-prettyFrame
-  :: (AsVinyl ts, RecAll Identity ts Show, RecAll Identity (UnColumn ts) Show)
-  => Frame (Record ts) -> D.Display
+type FRecord ts =
+    (AsVinyl ts, RecAll Identity ts Show, RecAll Identity (UnColumn ts) Show)
+
+instance FRecord ts => D.IHaskellDisplay (Frame (Record ts)) where
+  display = return . prettyFrame
+
+prettyFrame :: FRecord ts => Frame (Record ts) -> D.Display
 prettyFrame df@(Frame fLen _) =
-    D.Display [D.html $ "<table>" ++ prettyHeaders ++ prettydf ++ "</table>"]
+    D.Display [D.html $
+      "<table>" ++ prettyHeaders ++ prettydf ++ "</table>" ++ dfMetrics ]
   where
     prettyHeaders = prettyHRow getHeaders
     getHeaders -- XXX: Do a better implementation by reading vinyl Rec.
@@ -37,7 +45,8 @@ prettyFrame df@(Frame fLen _) =
     prettydf
       | fLen < 20 = prettyTable df
       | otherwise = prettyTable (takeFrameRow 10 df)
-          ++ "<tr><td style='text-align:center' colspan=999>. . .</td></tr>"
+          ++ "<tr><td style='text-align:center' colspan="
+          ++ (show nCols) ++">. . .</td></tr>"
           ++ prettyTable (dropFrameRow (fLen-10) df)
     prettyTable = foldMap prettyRow
     prettyRow = (++ "</tr>") . foldl' ((. prettyCell) . (++)) "<tr>"
@@ -45,3 +54,7 @@ prettyFrame df@(Frame fLen _) =
     prettyHRow = (++ "</tr>") . foldl' ((. prettyHCell) . (++)) "<tr>"
     prettyCell = ("<td>" ++) . (++ "</td>")
     prettyHCell = ("<th>" ++) . (++ "</th>") . T.unpack
+    nCols = L.length getHeaders
+    dfMetrics = show fLen ++ " x " ++ (show nCols) ++ " dataframe."
+
+
