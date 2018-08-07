@@ -47,6 +47,7 @@ library
     , ihaskell-widgets
     , ipython-kernel
     , inline-r
+    , PyF
     , string-qq
     , text
     , vinyl

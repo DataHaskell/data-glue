@@ -33,5 +33,6 @@ extra-deps:
 - ipython-kernel-0.9.1.0
 - magic-1.1
 - mfsolve-0.3.2.0
+- PyF-0.6.1.0
 - static-canvas-0.2.0.3
 - vinyl-0.8.1
