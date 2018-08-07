@@ -91,4 +91,4 @@ typical data science workflows.
 
 ## Datasets ##
 
-from https://archive.ics.uci.edu/ml/datasets.html
+The datasets used in the tutorials came from https://archive.ics.uci.edu/ml/datasets.html and https://vincentarelbundock.github.io/Rdatasets/datasets.html.
