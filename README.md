@@ -52,6 +52,38 @@ Data-Glue contains:
   - **hvega** v0.1.0.0 [![Hackage](https://img.shields.io/hackage/v/hvega.svg)](https://hackage.haskell.org/package/hvega) [![hvega](http://stackage.org/package/hvega/badge/lts-11)](http://stackage.org/lts-11/package/hvega) [![hvega](http://stackage.org/package/hvega/badge/nightly)](http://stackage.org/nightly/package/hvega)
   <br/>Create Vega and Vega-Lite visualizations.
 
+## How to use Data-glue ##
+
+### Using Docker ###
+Data-glue can be easily tested using the [provided Dockerfile](https://github.com/DataHaskell/data-glue/blob/master/Dockerfile).
+
+### System install ###
+Data-glue has several system dependencies, which are: `python3-pip` `libgmp-dev` `libmagic-dev` `libtinfo-dev` `libzmq3-dev` `libcairo2-dev` `libpango1.0-dev`
+These dependencies can be installed using your default package manager, like `apt`, `yum`, `nix`, etc.
+
+You have to install Jupyterlab, the environment in which Data-glue will live.
+```bash
+pip3 install -U jupyterlab
+jupyter labextension install ihaskell_jupyterlab````
+```
+
+You can now clone the project:
+```bash
+git clone https://github.com/DataHaskell/data-glue.git
+```
+
+Then build the project and install the kernel to Jupyter:
+```shell
+stack setup
+stack build && stack install
+stack exec -- ihaskell install --stack
+````
+
+Now, you can launch an instance of JupyterLab with the Data-glue kernel with:
+```shell
+stack exec jupyter lab
+```
+
 ## Tutorials ##
 
 This contains some [interactive tutorials](https://github.com/DataHaskell/data-glue/tree/master/tutorials) that show how Haskell can be used for
