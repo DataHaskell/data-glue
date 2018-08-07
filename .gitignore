@@ -1,4 +1,7 @@
 # Stack uses this directory as scratch space.
 /.stack-work/
+#Jupyter
 .ipynb_checkpoints
 **/.ipynb_checkpoints/*
+#Vim
+*.swp
