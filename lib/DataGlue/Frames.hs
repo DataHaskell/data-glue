@@ -18,8 +18,8 @@ import Data.Foldable
 import qualified Data.List as L
 import Data.Vinyl.Functor (Identity)
 import Frames
+import Frames.InCore (RecVec)
 import qualified IHaskell.Display as D
-import qualified Data.Text as T
 
 takeFrameRow :: Int -> Frame r -> Frame r
 takeFrameRow n (Frame fLen fRow) = Frame (min n fLen) fRow
@@ -27,8 +27,8 @@ takeFrameRow n (Frame fLen fRow) = Frame (min n fLen) fRow
 dropFrameRow :: Int -> Frame r -> Frame r
 dropFrameRow n (Frame fLen fRow) = Frame (max 0 (fLen - n)) (\i -> fRow (i + n))
 
-type FRecord ts =
-    (AsVinyl ts, RecAll Identity ts Show, RecAll Identity (UnColumn ts) Show)
+type FRecord ts = (AsVinyl ts, ColumnHeaders ts, RecAll Identity ts Show
+    , RecAll Identity (UnColumn ts) Show, RecVec ts)
 
 instance FRecord ts => D.IHaskellDisplay (Frame (Record ts)) where
   display = return . prettyFrame
@@ -40,9 +40,7 @@ prettyFrame :: FRecord ts => Frame (Record ts) -> D.Display
 prettyFrame df@(Frame fLen _) =
     D.Display [D.html $ (prettyTable getHeaders prettydf) ++ dfMetrics]
   where
-    getHeaders -- XXX: Do a better implementation by reading vinyl Rec.
-      | fLen > 0 = extractHeadersFromRecord $ frameRow df 0
-      | otherwise = []
+    getHeaders = columnHeaders df
     prettydf
       | fLen < 20 = prettyPartofTable df
       | otherwise = prettyPartofTable (takeFrameRow 10 df)
@@ -57,11 +55,7 @@ prettyRecord :: FRecord ts => Record ts -> D.Display
 prettyRecord rec =
     D.Display [D.html $ prettyTable getHeaders $ prettyRow rec]
   where
-    getHeaders = extractHeadersFromRecord rec
-
-extractHeadersFromRecord :: FRecord ts => Record ts -> [String]
-extractHeadersFromRecord = map (T.unpack . T.strip . snd . T.breakOnEnd ", ")
-    . init . T.splitOn ":->" . T.pack . tail . show
+    getHeaders = columnHeaders $ toFrame [rec]
 
 prettyTable :: [String] -> String -> String
 prettyTable = (("<table>" ++) .) . (. (++ "</table>")) . (++) . prettyHRow
