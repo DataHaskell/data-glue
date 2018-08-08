@@ -38,36 +38,25 @@ instance FRecord ts => D.IHaskellDisplay (Record ts) where
 
 prettyFrame :: FRecord ts => Frame (Record ts) -> D.Display
 prettyFrame df@(Frame fLen _) =
-    D.Display [D.html $ (prettyTable getHeaders prettydf) ++ dfMetrics]
+    D.Display [D.html $ prettyTable headers prettydf]
   where
-    getHeaders = columnHeaders df
+    headers = columnHeaders df
     prettydf
       | fLen < 20 = prettyPartofTable df
       | otherwise = prettyPartofTable (takeFrameRow 10 df)
           ++ "<tr><td style='text-align:center' colspan="
-          ++ (show nCols) ++">. . .</td></tr>"
+          ++ (show $ L.length headers) ++">. . .</td></tr>"
           ++ prettyPartofTable (dropFrameRow (fLen-10) df)
+    prettyTable = (("<table>" ++) .) . (. (++ "</table>")) . (++) . prettyHRow
     prettyPartofTable = foldMap prettyRow
-    nCols = L.length getHeaders
-    dfMetrics = show fLen ++ " x " ++ (show nCols) ++ " dataframe."
-
-prettyRecord :: FRecord ts => Record ts -> D.Display
-prettyRecord rec =
-    D.Display [D.html $ prettyTable getHeaders $ prettyRow rec]
-  where
-    getHeaders = columnHeaders $ toFrame [rec]
-
-prettyTable :: [String] -> String -> String
-prettyTable = (("<table>" ++) .) . (. (++ "</table>")) . (++) . prettyHRow
-
-prettyRow :: FRecord ts => Record ts -> String
-prettyRow = (++ "</tr>") . foldl' ((. prettyCell) . (++)) "<tr>" . showFields
-  where
+    prettyRow = (++ "</tr>") . foldl' ((. prettyCell) . (++)) "<tr>"
+        . showFields
     prettyCell = ("<td>" ++) . (++ "</td>")
-
-prettyHRow :: [String] -> String
-prettyHRow = (++ "</tr>") . foldl' ((. prettyHCell) . (++)) "<tr>"
-  where
+    prettyHRow = (++ "</tr>") . foldl' ((. prettyHCell) . (++)) "<tr>"
     prettyHCell = ("<th>" ++) . (++ "</th>")
 
+prettyRecord :: FRecord ts => Record ts -> D.Display
+prettyRecord rec = prettyFrame $ toFrame [rec]
 
+-- XXX: Do `describe` (like in Python)
+-- XXX: Do `str` (like in R)
