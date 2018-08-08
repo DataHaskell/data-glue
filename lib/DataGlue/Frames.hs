@@ -33,29 +33,47 @@ type FRecord ts =
 instance FRecord ts => D.IHaskellDisplay (Frame (Record ts)) where
   display = return . prettyFrame
 
+instance FRecord ts => D.IHaskellDisplay (Record ts) where
+  display = return . prettyRecord
+
 prettyFrame :: FRecord ts => Frame (Record ts) -> D.Display
 prettyFrame df@(Frame fLen _) =
-    D.Display [D.html $
-      "<table>" ++ prettyHeaders ++ prettydf ++ "</table>" ++ dfMetrics ]
+    D.Display [D.html $ (prettyTable getHeaders prettydf) ++ dfMetrics]
   where
-    prettyHeaders = prettyHRow getHeaders
     getHeaders -- XXX: Do a better implementation by reading vinyl Rec.
-      | fLen > 0 = map (T.strip . snd . T.breakOnEnd ", ")
-          (init . T.splitOn ":->" . T.pack . tail . show $ frameRow df 0)
+      | fLen > 0 = extractHeadersFromRecord $ frameRow df 0
       | otherwise = []
     prettydf
-      | fLen < 20 = prettyTable df
-      | otherwise = prettyTable (takeFrameRow 10 df)
+      | fLen < 20 = prettyPartofTable df
+      | otherwise = prettyPartofTable (takeFrameRow 10 df)
           ++ "<tr><td style='text-align:center' colspan="
           ++ (show nCols) ++">. . .</td></tr>"
-          ++ prettyTable (dropFrameRow (fLen-10) df)
-    prettyTable = foldMap prettyRow
-    prettyRow = (++ "</tr>") . foldl' ((. prettyCell) . (++)) "<tr>"
-      . showFields
-    prettyHRow = (++ "</tr>") . foldl' ((. prettyHCell) . (++)) "<tr>"
-    prettyCell = ("<td>" ++) . (++ "</td>")
-    prettyHCell = ("<th>" ++) . (++ "</th>") . T.unpack
+          ++ prettyPartofTable (dropFrameRow (fLen-10) df)
+    prettyPartofTable = foldMap prettyRow
     nCols = L.length getHeaders
     dfMetrics = show fLen ++ " x " ++ (show nCols) ++ " dataframe."
+
+prettyRecord :: FRecord ts => Record ts -> D.Display
+prettyRecord rec =
+    D.Display [D.html $ prettyTable getHeaders $ prettyRow rec]
+  where
+    getHeaders = extractHeadersFromRecord rec
+
+extractHeadersFromRecord :: FRecord ts => Record ts -> [String]
+extractHeadersFromRecord = map (T.unpack . T.strip . snd . T.breakOnEnd ", ")
+    . init . T.splitOn ":->" . T.pack . tail . show
+
+prettyTable :: [String] -> String -> String
+prettyTable = (("<table>" ++) .) . (. (++ "</table>")) . (++) . prettyHRow
+
+prettyRow :: FRecord ts => Record ts -> String
+prettyRow = (++ "</tr>") . foldl' ((. prettyCell) . (++)) "<tr>" . showFields
+  where
+    prettyCell = ("<td>" ++) . (++ "</td>")
+
+prettyHRow :: [String] -> String
+prettyHRow = (++ "</tr>") . foldl' ((. prettyHCell) . (++)) "<tr>"
+  where
+    prettyHCell = ("<th>" ++) . (++ "</th>")
 
 
