@@ -25,7 +25,7 @@ source-repository head
 
 library
   hs-source-dirs:  lib
-  exposed-modules: DataGlue.Base
+  exposed-modules: DataGlue.Frames
   ghc-options: -Wall -freduction-depth=32
   build-depends:
       base

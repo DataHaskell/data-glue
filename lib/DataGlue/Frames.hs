@@ -8,9 +8,10 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module DataGlue.Base
+module DataGlue.Frames
   ( dropFrameRow
   , takeFrameRow
+  , module Frames
   ) where
 
 import Data.Foldable
