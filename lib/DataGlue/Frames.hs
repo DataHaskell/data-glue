@@ -8,6 +8,10 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
+{-| This modules provides top-level functions upon the @Frames@ module to
+    simplify data science operations in a iHaskell notebook.
+-}
+
 module DataGlue.Frames
   ( describe
   , dropFrameRow
@@ -26,27 +30,34 @@ import Frames
 import Frames.InCore (RecVec)
 import qualified IHaskell.Display as D
 
+-- | Returns the input 'Frame' restricted to its @n@ first rows.
 takeFrameRow :: Int -> Frame r -> Frame r
 takeFrameRow n (Frame fLen fRow) = Frame (min n fLen) fRow
 
+-- | Returns the input 'Frame' restricted to its @n@ last rows.
 dropFrameRow :: Int -> Frame r -> Frame r
 dropFrameRow n (Frame fLen fRow) = Frame (max 0 (fLen - n)) (\i -> fRow (i + n))
 
+-- | Describe the input Frame. Currently limited to its dimensions.
 describe :: (ColumnHeaders cs) => Frame (Rec f cs) -> String
 describe df = height ++ "x" ++ width ++ " dataframe."
   where
     height = show $ length df
     width = show . LI.length $ columnHeaders df
 
+-- | 'values' @col@ @frame@ returns all the values from the 'Frame' @f@,
+--   given the 'Lens' @col@.
 values :: Functor f => Getting b s b -> f s -> f b
 values = (<$>) . view
 
+-- | 'uniques' has the same prupose than 'values', but with duplicated removed.
 uniques :: (Foldable f, Ord a, Functor f) => Getting a s a -> f s -> [a]
 uniques = (L.fold L.nub .) . values
 
 type FRecord ts = (AsVinyl ts, ColumnHeaders ts, RecAll Identity ts Show
     , RecAll Identity (UnColumn ts) Show, RecVec ts)
 
+{-| Instances for easy prettyprint of Frames -}
 instance FRecord ts => D.IHaskellDisplay (Frame (Record ts)) where
   display = return . prettyRecFrame
 
@@ -62,6 +73,7 @@ instance D.IHaskellDisplay (Frame Text) where
 instance FRecord ts => D.IHaskellDisplay (Record ts) where
   display = return . prettyRecord
 
+-- | Rendering of a 'Frame' of 'Record' as a table.
 prettyRecFrame :: FRecord ts => Frame (Record ts) -> D.Display
 prettyRecFrame df =
     D.Display [D.html $ prettyTable $ (prettyHRow headers) ++ prettyFrame]
@@ -70,12 +82,14 @@ prettyRecFrame df =
     prettyFrame = sampledFrame df f (LI.length $ columnHeaders df)
     f = foldMap (prettyRow . showFields)
 
+-- | Rendering of a 'Frame' of showable values as a table.
 prettyValueFrame :: Show a => Frame a -> D.Display
 prettyValueFrame df = D.Display [D.html $ prettyTable $ prettyFrame]
   where
     prettyFrame = sampledFrame df f 1
     f = foldMap (prettyRow . return . show)
 
+-- | Limits the rendering of a 'Frame' to the first 10 and last 10 rows.
 sampledFrame :: Frame r -> (Frame r -> String) -> Int -> String
 sampledFrame df@(Frame fLen _) f width
     | fLen < 20 = f df
@@ -83,9 +97,11 @@ sampledFrame df@(Frame fLen _) f width
         ++ prettySampleSeparator width
         ++ f (dropFrameRow (fLen-10) df)
 
+-- | Rendering of a 'Record'.
 prettyRecord :: FRecord ts => Record ts -> D.Display
 prettyRecord rec = prettyRecFrame $ toFrame [rec]
 
+-- | Rendering of a separator in an HTML table.
 prettySampleSeparator :: (Num a, Show a) => a -> String
 prettySampleSeparator n =
   "<tr><td style='text-align:center' colspan=" ++ show n ++">. . .</td></tr>"
