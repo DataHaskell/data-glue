@@ -14,8 +14,13 @@
 module DataGlue.Frames.GroupBy
   ( groupByOp
   , mean
+  , product
+  , std
+  , sum
+  , variance
   ) where
 
+import Prelude hiding (product, sum)
 import qualified Control.Foldl as L
 import Control.Lens (Getting, view)
 import DataGlue.Frames
@@ -43,4 +48,23 @@ groupByOp col df operation columns = (<$> groups col df) . operation <$> columns
 
 -- | Get the mean of a column, using a 'Lens'.
 mean :: (Functor f, Fractional c, Foldable f) => Getting c s c -> f s -> c
-mean = (L.fold L.mean .) . (<$>) . view
+mean = gOp L.mean
+
+-- | Get the product of a column, using a 'Lens'.
+product :: (Functor f, Num c, Foldable f) => Getting c s c -> f s -> c
+product = gOp L.product
+
+-- | Get the std of a column, using a 'Lens'.
+std :: (Functor f, Floating c, Foldable f) => Getting c s c -> f s -> c
+std = gOp L.std
+
+-- | Get the sum of a column, using a 'Lens'.
+sum :: (Functor f, Num c, Foldable f) => Getting c s c -> f s -> c
+sum = gOp L.sum
+
+-- | Get the variance of a column, using a 'Lens'.
+variance :: (Functor f, Fractional c, Foldable f) => Getting c s c -> f s -> c
+variance = gOp L.variance
+
+gOp :: (Foldable f, Functor f) => L.Fold a c -> Getting a s a -> f s -> c
+gOp f = (L.fold f .) . (<$>) . view
