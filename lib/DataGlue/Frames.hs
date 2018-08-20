@@ -9,7 +9,8 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module DataGlue.Frames
-  ( dropFrameRow
+  ( describe
+  , dropFrameRow
   , takeFrameRow
   , module Frames
   ) where
@@ -26,6 +27,12 @@ takeFrameRow n (Frame fLen fRow) = Frame (min n fLen) fRow
 
 dropFrameRow :: Int -> Frame r -> Frame r
 dropFrameRow n (Frame fLen fRow) = Frame (max 0 (fLen - n)) (\i -> fRow (i + n))
+
+describe :: (ColumnHeaders cs) => Frame (Rec f cs) -> String
+describe df = height ++ "x" ++ width ++ " dataframe."
+  where
+    height = show $ length df
+    width = show . L.length $ columnHeaders df
 
 type FRecord ts = (AsVinyl ts, ColumnHeaders ts, RecAll Identity ts Show
     , RecAll Identity (UnColumn ts) Show, RecVec ts)
