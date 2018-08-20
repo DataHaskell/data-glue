@@ -12,11 +12,15 @@ module DataGlue.Frames
   ( describe
   , dropFrameRow
   , takeFrameRow
+  , uniques
+  , values
   , module Frames
   ) where
 
 import Data.Foldable
-import qualified Data.List as L
+import qualified Control.Foldl as L
+import Control.Lens (Getting, view)
+import qualified Data.List as LI
 import Data.Vinyl.Functor (Identity)
 import Frames
 import Frames.InCore (RecVec)
@@ -32,7 +36,13 @@ describe :: (ColumnHeaders cs) => Frame (Rec f cs) -> String
 describe df = height ++ "x" ++ width ++ " dataframe."
   where
     height = show $ length df
-    width = show . L.length $ columnHeaders df
+    width = show . LI.length $ columnHeaders df
+
+values :: Functor f => Getting b s b -> f s -> f b
+values = (<$>) . view
+
+uniques :: (Foldable f, Ord a, Functor f) => Getting a s a -> f s -> [a]
+uniques = (L.fold L.nub .) . values
 
 type FRecord ts = (AsVinyl ts, ColumnHeaders ts, RecAll Identity ts Show
     , RecAll Identity (UnColumn ts) Show, RecVec ts)
@@ -57,7 +67,7 @@ prettyRecFrame df =
     D.Display [D.html $ prettyTable $ (prettyHRow headers) ++ prettyFrame]
   where
     headers = columnHeaders df
-    prettyFrame = sampledFrame df f (L.length $ columnHeaders df)
+    prettyFrame = sampledFrame df f (LI.length $ columnHeaders df)
     f = foldMap (prettyRow . showFields)
 
 prettyValueFrame :: Show a => Frame a -> D.Display

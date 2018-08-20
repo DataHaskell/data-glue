@@ -47,6 +47,7 @@ library
     , ihaskell-widgets
     , ipython-kernel
     , inline-r
+    , lens
     , PyF
     , string-qq
     , text
