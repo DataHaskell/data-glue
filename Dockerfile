@@ -1,57 +1,47 @@
-FROM fpco/stack-build:lts-11.17
+# Dockerfile
+# docker build -t dataglue .
+FROM haskell:8.2.2
 
-# Install all necessary Ubuntu packages
-RUN apt-get update && apt-get install -y python3-pip libgmp-dev libmagic-dev libtinfo-dev libzmq3-dev libcairo2-dev libpango1.0-dev libblas-dev liblapack-dev gcc g++ r-base r-base-core && \
-    rm -rf /var/lib/apt/lists/*
+# Install dependecies needed
+RUN apt-get update && apt-get install -y \
+    curl \
+    libmagic-dev \
+    libzmq3-dev \
+    libpango1.0-dev \
+    python3-pip \
+    r-base
 
+# Install R package ggplot2
 RUN R -e "install.packages(c('ggplot2'), repos='http://cran.rstudio.com/')"
 
-RUN curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash - && \
+# Install NodeJS
+RUN curl -sSL https://deb.nodesource.com/setup_8.x | bash && \
     apt-get install -y nodejs
 
 # Install Jupyter notebook
-RUN pip3 install -U jupyterlab
-RUN jupyter labextension install ihaskell_jupyterlab
+RUN pip3 install jupyterlab==0.33.0 && \
+    jupyter labextension install ihaskell_jupyterlab
 
-# setup the haskell environment
-ENV LANG en_US.UTF-8
-ENV NB_USER jovyan
-ENV NB_UID 1000
-ENV HOME /home/${NB_USER}
-
-RUN adduser --disabled-password \
-    --gecos "Default user" \
-    --uid ${NB_UID} \
-    ${NB_USER}
+# Setup the haskell environment
+ENV DG_USER dataglue
+ENV DG_UID 1000
+ENV DG_HOME /home/${DG_USER}
+RUN adduser --disabled-password --gecos "Default user" --uid ${DG_UID} ${DG_USER}
 
 # Set up a working directory for IHaskell
-WORKDIR ${HOME}
-
-USER root
-RUN chown -R ${NB_UID} ${HOME}
-USER ${NB_UID}
-
-# Set up stack
-COPY data-glue.cabal data-glue.cabal
-COPY stack.yaml stack.yaml
+WORKDIR ${DG_HOME}
+COPY . .
 
 # Install dependencies for IHaskell
-USER root
-RUN chown -R ${NB_UID} ${HOME}
-USER ${NB_UID}
+RUN chown -R ${DG_UID} ${DG_HOME}
+USER ${DG_UID}
 
-RUN stack setup
-RUN stack build && stack install
-RUN stack exec -- ihaskell install --stack
-
-COPY datasets datasets
-COPY tutorials tutorials
-
-USER root
-RUN chown -R ${NB_UID} ${HOME}
-USER ${NB_UID}
+RUN stack build && \
+    stack install && \
+    stack exec -- ihaskell install --stack
 
 EXPOSE 8888
 
 # Run the notebook
-CMD ["stack", "exec", "--", "jupyter", "lab", "--ip", "0.0.0.0"]
+CMD ["stack", "exec", "jupyter", "lab"]
+# CMD ["stack", "exec", "--", "jupyter", "lab", "--ip", "0.0.0.0"]
