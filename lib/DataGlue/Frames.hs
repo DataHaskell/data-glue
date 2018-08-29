@@ -34,7 +34,7 @@ import qualified IHaskell.Display as D
 takeFrameRow :: Int -> Frame r -> Frame r
 takeFrameRow n (Frame fLen fRow) = Frame (min n fLen) fRow
 
--- | Returns the input 'Frame' restricted to its @n@ last rows.
+-- | Returns the input 'Frame' omitting its @n@ first rows.
 dropFrameRow :: Int -> Frame r -> Frame r
 dropFrameRow n (Frame fLen fRow) = Frame (max 0 (fLen - n)) (\i -> fRow (i + n))
 
