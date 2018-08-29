@@ -15,20 +15,22 @@
 module DataGlue.Frames
   ( describe
   , dropFrameRow
+  , splitFrame
   , takeFrameRow
   , uniques
   , values
   , module Frames
   ) where
 
-import Data.Foldable
 import qualified Control.Foldl as L
 import Control.Lens (Getting, view)
+import Data.Foldable
 import qualified Data.List as LI
 import Data.Vinyl.Functor (Identity)
 import Frames
 import Frames.InCore (RecVec)
 import qualified IHaskell.Display as D
+import System.Random (StdGen, mkStdGen, randoms)
 
 -- | Returns the input 'Frame' restricted to its @n@ first rows.
 takeFrameRow :: Int -> Frame r -> Frame r
@@ -53,6 +55,29 @@ values = (<$>) . view
 -- | 'uniques' has the same prupose than 'values', but with duplicated removed.
 uniques :: (Foldable f, Ord a, Functor f) => Getting a s a -> f s -> [a]
 uniques = (L.fold L.nub .) . values
+
+-- | Splits a 'Frame'.
+splitFrame
+  :: RealFrac a
+  => Int -- ^ a random seed
+  -> Frame r -- ^ a frame
+  -> a -- ^ proportion of the split.
+  -> (Frame r, Frame r)
+splitFrame seed df n =
+  let shuffled_indexes = shuffle (mkStdGen seed) [0..length df-1]
+      shuffled = df {frameRow = \i -> frameRow df (shuffled_indexes!!i)}
+      size = floor $ fromIntegral (length df) * n
+  in (takeFrameRow size shuffled, dropFrameRow size shuffled)
+
+-- | Shuffles a list, given a 'StdGen'.
+shuffle :: StdGen -> [a] -> [a]
+shuffle = shuffle' . randoms
+  where
+    shuffle' _ [] = []
+    shuffle' (i:is) xs = let (left, a:right) = splitAt (i `mod` length xs) xs
+                         in a : shuffle' is (left ++ right)
+    shuffle' [] _ = error "No indexes provided." -- Can't happen (exhaustivity)
+
 
 type FRecord ts = (AsVinyl ts, ColumnHeaders ts, RecAll Identity ts Show
     , RecAll Identity (UnColumn ts) Show, RecVec ts)

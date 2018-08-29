@@ -50,6 +50,7 @@ library
     , inline-r
     , lens
     , PyF
+    , random
     , string-qq
     , text
     , vinyl
