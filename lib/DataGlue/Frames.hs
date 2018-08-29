@@ -26,6 +26,7 @@ import qualified Control.Foldl as L
 import Control.Lens (Getting, view)
 import Data.Foldable
 import qualified Data.List as LI
+import Data.Typeable
 import Data.Vinyl.Functor (Identity)
 import Frames
 import Frames.InCore (RecVec)
@@ -40,12 +41,38 @@ takeFrameRow n (Frame fLen fRow) = Frame (min n fLen) fRow
 dropFrameRow :: Int -> Frame r -> Frame r
 dropFrameRow n (Frame fLen fRow) = Frame (max 0 (fLen - n)) (\i -> fRow (i + n))
 
--- | Describe the input Frame. Currently limited to its dimensions.
-describe :: (ColumnHeaders cs) => Frame (Rec f cs) -> String
-describe df = height ++ "x" ++ width ++ " dataframe."
+-- | Returns the type of the columns.
+colTypes :: Typeable r => Frame r -> [String]
+colTypes = go . f . l . head . f . typeOf
+  where
+      go [] = []
+      go [x] = [show (l x)]
+      go (x:xs:_) = show (l x) : go (f xs)
+      f = snd . splitTyConApp
+      l = last . f
+
+-- | Returns names and types of the columns.
+colmanifest
+  :: (Typeable cs, Typeable f, ColumnHeaders cs)
+  => Frame (Rec f cs) -> [(String, String)]
+colmanifest df = zip (columnHeaders df) (colTypes df)
+
+-- | Returns a description of the Frame dimensions.
+dimensions :: (ColumnHeaders cs) => Frame (Rec f cs) -> String
+dimensions df = height ++ "x" ++ width ++ " dataframe."
   where
     height = show $ length df
     width = show . LI.length $ columnHeaders df
+
+-- | Describe the input Frame. Currently limited to its dimensions.
+describe
+  :: (Typeable cs, Typeable f, ColumnHeaders cs)
+  => Frame (Rec f cs) -> D.Display
+describe df = D.Display [D.plain $ dim ++ cols]
+  where
+    dim = dimensions df ++ "\n"
+    cols = LI.intercalate "\n" $
+             (\(n,t) -> "  column \"" ++ n ++ "\": " ++ t) <$> colmanifest df
 
 -- | 'values' @col@ @frame@ returns all the values from the 'Frame' @f@,
 --   given the 'Lens' @col@.
@@ -150,5 +177,4 @@ inHtml, outHtml :: String -> String
 inHtml = ("<" ++) . (++ ">")
 outHtml = ("</" ++) . (++ ">")
 
--- XXX: Do `describe` (like in Python)
 -- XXX: Do `str` (like in R)
