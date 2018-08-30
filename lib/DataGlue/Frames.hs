@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -6,6 +7,8 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 {-| This modules provides top-level functions upon the @Frames@ module to
@@ -14,6 +17,8 @@
 
 module DataGlue.Frames
   ( describe
+  , dropField
+  , dropFields
   , dropFrameRow
   , splitFrame
   , takeFrameRow
@@ -28,6 +33,7 @@ import Data.Foldable
 import qualified Data.List as LI
 import Data.Typeable
 import Data.Vinyl.Functor (Identity)
+import Data.Vinyl.TypeLevel (RImage)
 import Frames
 import Frames.InCore (RecVec)
 import qualified IHaskell.Display as D
@@ -83,7 +89,7 @@ values = (<$>) . view
 uniques :: (Foldable f, Ord a, Functor f) => Getting a s a -> f s -> [a]
 uniques = (L.fold L.nub .) . values
 
--- | Splits a 'Frame'.
+-- | Randomly splits a 'Frame', to get train and test sets, given a portion.
 splitFrame
   :: RealFrac a
   => Int -- ^ a random seed
@@ -95,6 +101,36 @@ splitFrame seed df n =
       shuffled = df {frameRow = \i -> frameRow df (shuffled_indexes!!i)}
       size = floor $ fromIntegral (length df) * n
   in (takeFrameRow size shuffled, dropFrameRow size shuffled)
+
+type family Drop t l where
+  Drop t '[] = '[]
+  Drop t (t ': xs) = xs -- We only drop the first one
+  Drop t (t' ': xs) = t' ': Drop t xs
+
+type family Drops t l where
+  Drops '[] l = l
+  Drops (t ': ts) l = Drops ts (Drop t l)
+
+{-| Drops a field of a 'Record'.
+    Can be mapped over a Frame, like:
+
+> dropField @[Results] <$> df
+-}
+dropField
+  :: forall t xs. (RecSubset Rec (Drop t xs) xs (RImage (Drop t xs) xs))
+  => Record xs -> Record (Drop t xs)
+dropField v = rcast v
+
+{-| Drops multiple fields of a 'Record'.
+
+    Can be mapped over a Frame, like:
+
+> dropFields @[Values, Results] <$> df
+-}
+dropFields
+  :: forall ts xs. (RecSubset Rec (Drops ts xs) xs (RImage (Drops ts xs) xs))
+  => Record xs -> Record (Drops ts xs)
+dropFields v = rcast v
 
 -- | Shuffles a list, given a 'StdGen'.
 shuffle :: StdGen -> [a] -> [a]
