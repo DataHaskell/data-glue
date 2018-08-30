@@ -19,9 +19,7 @@
 
 module DataGlue.Frames
   ( describe
-  , dropColumn
   , dropColumns
-  , dropField
   , dropFields
   , dropFrameRow
   , splitTrainTestFrame
@@ -38,7 +36,6 @@ import Data.Foldable
 import qualified Data.List as LI
 import Data.Typeable
 import Data.Vinyl.Functor (Identity)
-import Data.Vinyl.TypeLevel (RImage)
 import Frames
 import Frames.InCore (RecVec)
 import qualified IHaskell.Display as D
@@ -107,22 +104,20 @@ splitFrame seed df n =
       size = floor $ fromIntegral (length df) * n
   in (takeFrameRow size shuffled, dropFrameRow size shuffled)
 
--- | Randomly splits a 'Frame' to get train and test sets, where a target column
---   has been removed from the test set.
+-- | Randomly splits a 'Frame' to get train and test sets, where target columns
+--   have been removed from the test set.
 splitTrainTestFrame
-  :: forall t xs a. (RecSubset Rec (Drop t xs) xs (RImage (Drop t xs) xs), RealFrac a)
-  => Int -- ^ a random seed
+ :: forall ts xs is a. (D ts xs is, RealFrac a)
+ => Int -- ^ a random seed
  -> Frame (Record xs) -- ^ a frame
  -> a -- ^ proportion of the split.
- -> (Frame (Record xs), Frame (Record (Drop t xs)))
+ -> (Frame (Record xs), Frame (Record (Drops ts xs)))
 splitTrainTestFrame seed df n =
   let (train, pretest) = splitFrame seed df n
-      test = dropColumn @t pretest
+      test = dropColumns @ts pretest
   in (train, test)
 
-
 type family Drop t l where
-  Drop t '[] = '[]
   Drop t (t ': xs) = xs -- We only drop the first one
   Drop t (t' ': xs) = t' ': Drop t xs
 
@@ -130,27 +125,15 @@ type family Drops t l where
   Drops '[] l = l
   Drops (t ': ts) l = Drops ts (Drop t l)
 
--- | Drops a field of a 'Record'.
-dropField
-  :: forall t xs. (RecSubset Rec (Drop t xs) xs (RImage (Drop t xs) xs))
-  => Record xs -> Record (Drop t xs)
-dropField v = rcast v
+type D ts xs is = RecSubset Rec (Drops ts xs) xs is
 
--- | Drops multiple fields of a 'Record'.
-dropFields
-  :: forall ts xs. (RecSubset Rec (Drops ts xs) xs (RImage (Drops ts xs) xs))
-  => Record xs -> Record (Drops ts xs)
+-- | Drops fields of a 'Record'.
+dropFields :: forall ts xs is. D ts xs is => Record xs -> Record (Drops ts xs)
 dropFields v = rcast v
-
--- | Convenient fonction to map 'dropField' over a 'Frame'.
-dropColumn
-  :: forall t xs. (RecSubset Rec (Drop t xs) xs (RImage (Drop t xs) xs))
-  => Frame (Record xs) -> Frame (Record (Drop t xs))
-dropColumn = (dropField @t <$>)
 
 -- | Convenient fonction to map 'dropFields' over a 'Frame'.
 dropColumns
-  :: forall ts xs. (RecSubset Rec (Drops ts xs) xs (RImage (Drops ts xs) xs))
+  :: forall ts xs is. D ts xs is
   => Frame (Record xs) -> Frame (Record (Drops ts xs))
 dropColumns = (dropFields @ts <$>)
 
@@ -163,9 +146,9 @@ shuffle = shuffle' . randoms
                          in a : shuffle' is (left ++ right)
     shuffle' [] _ = error "No indexes provided." -- Can't happen (exhaustivity)
 
-
-type FRecord ts = (AsVinyl ts, ColumnHeaders ts, RecAll Identity ts Show
-    , RecAll Identity (UnColumn ts) Show, RecVec ts)
+type R ts = RecAll Identity ts Show
+type FRecord ts =
+      (AsVinyl ts, ColumnHeaders ts, R ts, R (UnColumn ts), RecVec ts)
 
 {-| Instances for easy prettyprint of Frames -}
 instance FRecord ts => D.IHaskellDisplay (Frame (Record ts)) where
