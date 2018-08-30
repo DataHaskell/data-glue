@@ -13,7 +13,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-{-| This modules provides top-level functions upon the @Frames@ module to
+{-| This module provides top-level functions upon the @Frames@ module to
     simplify data science operations in a iHaskell notebook.
 -}
 

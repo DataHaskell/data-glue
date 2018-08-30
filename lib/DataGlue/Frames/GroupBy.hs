@@ -10,6 +10,8 @@
 
 >>> G.groupByOp colA df G.mean [colB, colC, colD]
 
+    This draft module should be rewritten soon, using TypeApplications.
+
 -}
 module DataGlue.Frames.GroupBy
   ( groupByOp
