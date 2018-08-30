@@ -6,7 +6,9 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -17,6 +19,8 @@
 
 module DataGlue.Frames
   ( describe
+  , dropColumn
+  , dropColumns
   , dropField
   , dropFields
   , dropFrameRow
@@ -111,26 +115,29 @@ type family Drops t l where
   Drops '[] l = l
   Drops (t ': ts) l = Drops ts (Drop t l)
 
-{-| Drops a field of a 'Record'.
-    Can be mapped over a Frame, like:
-
-> dropField @[Results] <$> df
--}
+-- | Drops a field of a 'Record'.
 dropField
   :: forall t xs. (RecSubset Rec (Drop t xs) xs (RImage (Drop t xs) xs))
   => Record xs -> Record (Drop t xs)
-dropField v = rcast v
+dropField = rcast
 
-{-| Drops multiple fields of a 'Record'.
-
-    Can be mapped over a Frame, like:
-
-> dropFields @[Values, Results] <$> df
--}
+-- | Drops multiple fields of a 'Record'.
 dropFields
   :: forall ts xs. (RecSubset Rec (Drops ts xs) xs (RImage (Drops ts xs) xs))
   => Record xs -> Record (Drops ts xs)
-dropFields v = rcast v
+dropFields = rcast
+
+-- | Convenient fonction to map 'dropField' over a 'Frame'.
+dropColumn
+  :: forall t xs. (RecSubset Rec (Drop t xs) xs (RImage (Drop t xs) xs))
+  => Frame (Record xs) -> Frame (Record (Drop t xs))
+dropColumn = (dropField @t <$>)
+
+-- | Convenient fonction to map 'dropFields' over a 'Frame'.
+dropColumns
+  :: forall t xs. (RecSubset Rec (Drops t xs) xs (RImage (Drops t xs) xs))
+  => Frame (Record xs) -> Frame (Record (Drops t xs))
+dropColumns = (dropFields @t <$>)
 
 -- | Shuffles a list, given a 'StdGen'.
 shuffle :: StdGen -> [a] -> [a]
