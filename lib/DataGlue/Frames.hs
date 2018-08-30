@@ -24,6 +24,7 @@ module DataGlue.Frames
   , dropField
   , dropFields
   , dropFrameRow
+  , splitTrainTestFrame
   , splitFrame
   , takeFrameRow
   , uniques
@@ -93,7 +94,7 @@ values = (<$>) . view
 uniques :: (Foldable f, Ord a, Functor f) => Getting a s a -> f s -> [a]
 uniques = (L.fold L.nub .) . values
 
--- | Randomly splits a 'Frame', to get train and test sets, given a portion.
+-- | Randomly splits a 'Frame' given a proportion.
 splitFrame
   :: RealFrac a
   => Int -- ^ a random seed
@@ -105,6 +106,20 @@ splitFrame seed df n =
       shuffled = df {frameRow = \i -> frameRow df (shuffled_indexes!!i)}
       size = floor $ fromIntegral (length df) * n
   in (takeFrameRow size shuffled, dropFrameRow size shuffled)
+
+-- | Randomly splits a 'Frame' to get train and test sets, where a target column
+--   has been removed from the test set.
+splitTrainTestFrame
+  :: forall t xs a. (RecSubset Rec (Drop t xs) xs (RImage (Drop t xs) xs), RealFrac a)
+  => Int -- ^ a random seed
+ -> Frame (Record xs) -- ^ a frame
+ -> a -- ^ proportion of the split.
+ -> (Frame (Record xs), Frame (Record (Drop t xs)))
+splitTrainTestFrame seed df n =
+  let (train, pretest) = splitFrame seed df n
+      test = dropColumn @t pretest
+  in (train, test)
+
 
 type family Drop t l where
   Drop t '[] = '[]
@@ -119,13 +134,13 @@ type family Drops t l where
 dropField
   :: forall t xs. (RecSubset Rec (Drop t xs) xs (RImage (Drop t xs) xs))
   => Record xs -> Record (Drop t xs)
-dropField = rcast
+dropField v = rcast v
 
 -- | Drops multiple fields of a 'Record'.
 dropFields
   :: forall ts xs. (RecSubset Rec (Drops ts xs) xs (RImage (Drops ts xs) xs))
   => Record xs -> Record (Drops ts xs)
-dropFields = rcast
+dropFields v = rcast v
 
 -- | Convenient fonction to map 'dropField' over a 'Frame'.
 dropColumn
@@ -135,9 +150,9 @@ dropColumn = (dropField @t <$>)
 
 -- | Convenient fonction to map 'dropFields' over a 'Frame'.
 dropColumns
-  :: forall t xs. (RecSubset Rec (Drops t xs) xs (RImage (Drops t xs) xs))
-  => Frame (Record xs) -> Frame (Record (Drops t xs))
-dropColumns = (dropFields @t <$>)
+  :: forall ts xs. (RecSubset Rec (Drops ts xs) xs (RImage (Drops ts xs) xs))
+  => Frame (Record xs) -> Frame (Record (Drops ts xs))
+dropColumns = (dropFields @ts <$>)
 
 -- | Shuffles a list, given a 'StdGen'.
 shuffle :: StdGen -> [a] -> [a]
