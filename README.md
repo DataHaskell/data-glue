@@ -63,7 +63,7 @@ These dependencies can be installed using your default package manager, like `ap
 
 You have to install Jupyterlab, the environment in which Data-glue will live.
 ```bash
-pip3 install -U jupyterlab
+pip3 install jupyterlab==0.33
 jupyter labextension install ihaskell_jupyterlab````
 ```
 
